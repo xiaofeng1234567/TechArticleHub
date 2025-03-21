@@ -22,7 +22,7 @@ export default function Layout({ categories, children, sidebar }: LayoutProps) {
       <div className="flex pt-16 min-h-screen">
         {sidebar}
 
-        <div className={`flex-1 ml-0 md:ml-64 bg-slate-50 transition-all duration-300`}>
+        <div className={`flex-1 ml-0 ${sidebar ? 'md:ml-64' : ''} bg-slate-50 transition-all duration-300`}>
           <button 
             className="md:hidden fixed bottom-4 right-4 bg-primary text-white p-3 rounded-full shadow-lg z-20 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             onClick={toggleSidebar}
@@ -30,8 +30,8 @@ export default function Layout({ categories, children, sidebar }: LayoutProps) {
             <Menu className="h-6 w-6" />
           </button>
           
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className={`${sidebar ? 'max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8' : 'w-full py-4'}`}>
+            <div className={`${sidebar ? 'bg-white p-6 rounded-lg shadow-md' : ''}`}>
               {children}
             </div>
           </div>

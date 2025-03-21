@@ -10,19 +10,25 @@ export function parseMarkdown(markdown: string): string {
   html = html.replace(/\r\n/g, '\n');
   html = html.replace(/\r/g, '\n');
   
-  // Escape HTML special characters in code blocks
+  // Escape HTML special characters in code blocks with better styling
   const codeBlocks: string[] = [];
   html = html.replace(/```(\w*)\n([\s\S]*?)```/gm, (match, lang, code) => {
     const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
-    codeBlocks.push(`<pre><code class="language-${lang || 'text'}">${escapeHtml(code.trim())}</code></pre>`);
+    const language = lang || 'text';
+    codeBlocks.push(`
+      <div class="code-block-wrapper relative my-6 rounded-lg overflow-hidden">
+        <div class="code-language bg-slate-800 text-slate-300 text-xs px-4 py-1 font-mono">${language}</div>
+        <pre class="p-0 m-0 bg-slate-800 text-slate-200 rounded-b-lg"><code class="language-${language} block p-4 overflow-x-auto">${escapeHtml(code.trim())}</code></pre>
+      </div>
+    `);
     return placeholder;
   });
 
-  // Escape inline code
+  // Escape inline code with better styling
   const inlineCodes: string[] = [];
   html = html.replace(/`([^`]+)`/g, (match, code) => {
     const placeholder = `__INLINE_CODE_${inlineCodes.length}__`;
-    inlineCodes.push(`<code>${escapeHtml(code)}</code>`);
+    inlineCodes.push(`<code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm font-mono text-slate-800">${escapeHtml(code)}</code>`);
     return placeholder;
   });
   

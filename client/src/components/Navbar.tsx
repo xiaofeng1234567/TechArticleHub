@@ -24,7 +24,7 @@ export default function Navbar({ categories = [] }: NavbarProps) {
 
   return (
     <nav className="bg-white shadow-md fixed top-0 w-full z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
@@ -32,7 +32,7 @@ export default function Navbar({ categories = [] }: NavbarProps) {
                 <span className="font-bold text-xl text-primary cursor-pointer">TechDocs</span>
               </Link>
             </div>
-            <div className="hidden sm:flex sm:items-center sm:ml-6 sm:space-x-8">
+            <div className="hidden sm:flex sm:items-center sm:ml-4 sm:space-x-4">
               {categories.map((category) => (
                 <Link
                   key={category}
