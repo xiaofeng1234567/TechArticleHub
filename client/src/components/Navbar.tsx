@@ -39,7 +39,7 @@ export default function Navbar({ categories = [] }: NavbarProps) {
                   href={`/${category}`}
                 >
                   <span
-                    className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    className={`nav-item inline-flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium ${
                       isActive(category)
                         ? 'bg-primary/10 text-primary'
                         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
@@ -73,7 +73,7 @@ export default function Navbar({ categories = [] }: NavbarProps) {
               href={`/${category}`}
             >
               <span
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                className={`block px-3 py-2 rounded-md text-base font-medium w-full text-center ${
                   isActive(category)
                     ? 'bg-primary/10 text-primary'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'

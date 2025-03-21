@@ -33,7 +33,7 @@ export default function ArticleList({
           key={article.id}
           className={`py-2 px-3 cursor-pointer hover:bg-slate-100 rounded-md text-slate-700 ${
             article.id === activeArticleId
-              ? 'active bg-blue-50 border-l-4 border-primary pl-2'
+              ? 'active bg-primary/10 font-medium text-primary'
               : ''
           }`}
           onClick={() => onArticleClick(article)}
