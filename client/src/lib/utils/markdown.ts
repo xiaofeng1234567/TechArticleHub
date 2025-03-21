@@ -1,68 +1,120 @@
 import { useEffect } from 'react';
 
-// Simple Markdown parsing functions
+// Enhanced Markdown parsing functions
 export function parseMarkdown(markdown: string): string {
+  if (!markdown) return '';
+  
   let html = markdown;
+  
+  // Convert line breaks
+  html = html.replace(/\r\n/g, '\n');
+  html = html.replace(/\r/g, '\n');
+  
+  // Escape HTML special characters in code blocks
+  const codeBlocks: string[] = [];
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/gm, (match, lang, code) => {
+    const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+    codeBlocks.push(`<pre><code class="language-${lang || 'text'}">${escapeHtml(code.trim())}</code></pre>`);
+    return placeholder;
+  });
+
+  // Escape inline code
+  const inlineCodes: string[] = [];
+  html = html.replace(/`([^`]+)`/g, (match, code) => {
+    const placeholder = `__INLINE_CODE_${inlineCodes.length}__`;
+    inlineCodes.push(`<code>${escapeHtml(code)}</code>`);
+    return placeholder;
+  });
   
   // Headers
   html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
   html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
   html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-
-  // Code blocks with language
-  html = html.replace(/```(\w+)\n([\s\S]*?)```/gm, '<pre><code class="language-$1">$2</code></pre>');
-  
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
+  html = html.replace(/^##### (.*$)/gm, '<h5>$1</h5>');
   
   // Bold
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
   
   // Italic
   html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+  
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  
+  // Images
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="my-4 max-w-full rounded">');
+  
+  // Horizontal rule
+  html = html.replace(/^\s*---+\s*$/gm, '<hr class="my-4">');
+  
+  // Blockquotes
+  html = html.replace(/^>\s+(.*$)/gm, '<blockquote class="border-l-4 border-slate-300 pl-4 py-1 my-4 italic text-slate-600">$1</blockquote>');
   
   // Lists
-  html = html.replace(/^\- (.*$)/gm, '<li>$1</li>');
-  html = html.replace(/^\d+\. (.*$)/gm, '<li>$1</li>');
-  
-  // Wrap lists
-  let inList = false;
-  const lines = html.split('\n');
-  
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith('<li>') && !inList) {
-      lines[i] = '<ul>' + lines[i];
-      inList = true;
-    } else if (!lines[i].startsWith('<li>') && inList) {
-      lines[i - 1] = lines[i - 1] + '</ul>';
-      inList = false;
-    }
-  }
-  
-  if (inList) {
-    lines[lines.length - 1] = lines[lines.length - 1] + '</ul>';
-  }
-  
-  html = lines.join('\n');
-  
-  // Tables
-  const tableRegex = /\|(.+)\|\n\|([-:]+\|)+\n((?:\|.+\|\n)+)/g;
-  html = html.replace(tableRegex, function(match, headers, separators, rows) {
-    const headerCells = headers.split('|').map(cell => cell.trim()).filter(Boolean);
-    const headerRow = '<tr>' + headerCells.map(cell => `<th>${cell}</th>`).join('') + '</tr>';
-    
-    const bodyRows = rows.trim().split('\n').map(row => {
-      const cells = row.split('|').map(cell => cell.trim()).filter(Boolean);
-      return '<tr>' + cells.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
-    }).join('');
-    
-    return `<table><thead>${headerRow}</thead><tbody>${bodyRows}</tbody></table>`;
+  const unorderedListRegex = /(?:^\s*[-*+]\s+.+$\n?)+/gm;
+  html = html.replace(unorderedListRegex, (match) => {
+    const items = match.split('\n')
+      .filter(line => line.trim().length > 0)
+      .map(line => line.trim().replace(/^[-*+]\s+(.*)$/, '<li>$1</li>'))
+      .join('');
+    return `<ul class="list-disc pl-5 my-4">${items}</ul>`;
+  });
+
+  const orderedListRegex = /(?:^\s*\d+\.\s+.+$\n?)+/gm;
+  html = html.replace(orderedListRegex, (match) => {
+    const items = match.split('\n')
+      .filter(line => line.trim().length > 0)
+      .map(line => line.trim().replace(/^\d+\.\s+(.*)$/, '<li>$1</li>'))
+      .join('');
+    return `<ol class="list-decimal pl-5 my-4">${items}</ol>`;
   });
   
-  // Paragraphs (excluding elements that should not be wrapped)
-  html = html.replace(/^(?!<h|<pre|<ul|<table|<li|<p)(.*$)/gm, '<p>$1</p>');
+  // Tables
+  const tableRegex = /\|(.+)\|\n\|([-:]+\|)+\n((?:\|.+\|\n?)+)/g;
+  html = html.replace(tableRegex, function(match, headers, separators, rows) {
+    const headerCells = headers.split('|').map((cell: string) => cell.trim()).filter(Boolean);
+    const headerRow = '<tr>' + headerCells.map((cell: string) => `<th class="border border-slate-300 p-2 bg-slate-100">${cell}</th>`).join('') + '</tr>';
+    
+    const bodyRows = rows.trim().split('\n').map((row: string) => {
+      const cells = row.split('|').map((cell: string) => cell.trim()).filter(Boolean);
+      return '<tr>' + cells.map((cell: string) => `<td class="border border-slate-300 p-2">${cell}</td>`).join('') + '</tr>';
+    }).join('');
+    
+    return `<div class="overflow-x-auto my-4"><table class="min-w-full border-collapse"><thead>${headerRow}</thead><tbody>${bodyRows}</tbody></table></div>`;
+  });
+  
+  // Paragraphs (add a more specific regex to avoid nesting)
+  const paragraphLines = html.split('\n').map(line => {
+    if (line.trim() === '') return '';
+    if (/^<(h[1-6]|pre|ul|ol|li|blockquote|div|p|table|hr)/i.test(line)) return line;
+    return `<p>${line}</p>`;
+  });
+  html = paragraphLines.join('\n');
+
+  // Replace code block placeholders
+  codeBlocks.forEach((block, i) => {
+    html = html.replace(`__CODE_BLOCK_${i}__`, block);
+  });
+
+  // Replace inline code placeholders
+  inlineCodes.forEach((code, i) => {
+    html = html.replace(`__INLINE_CODE_${i}__`, code);
+  });
   
   return html;
+}
+
+// Helper function to escape HTML special characters
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 // Hook to apply syntax highlighting after render
